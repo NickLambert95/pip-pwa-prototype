@@ -38,11 +38,29 @@
     const pipButton = document.getElementById('pipButton');
 
 pipButton.addEventListener('click', async () => {
-  try {
-    await video.requestPictureInPicture();
-  } catch (err) {
-    alert("PiP blocked. Open in Safari (not PWA) or see Step 2.");
-  }
+  console.log('PiP button clicked');
+  // Delay the PiP request by 2000ms (2 seconds)
+  setTimeout(async () => {
+    console.log('Attempting to trigger PiP after delay...');
+    try {
+      if (video.webkitSetPresentationMode) {
+        video.webkitSetPresentationMode('picture-in-picture');
+        console.log('webkitSetPresentationMode called');
+      } else if (document.pictureInPictureEnabled) {
+        if (video !== document.pictureInPictureElement) {
+          await video.requestPictureInPicture();
+          console.log('requestPictureInPicture called');
+        } else {
+          await document.exitPictureInPicture();
+          console.log('exitPictureInPicture called');
+        }
+      } else {
+        alert('Picture-in-Picture is not supported on this device.');
+      }
+    } catch (err) {
+      console.error('PiP failed:', err);
+    }
+  }, 2000); // 2000ms delay
 });
   </script>
 </body>
