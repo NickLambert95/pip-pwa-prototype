@@ -39,28 +39,54 @@
 
 pipButton.addEventListener('click', async () => {
   console.log('PiP button clicked');
-  // Delay the PiP request by 2000ms (2 seconds)
-  setTimeout(async () => {
-    console.log('Attempting to trigger PiP after delay...');
-    try {
+  try {
+    // First, attempt to enter fullscreen if available.
+    if (video.webkitEnterFullscreen) {
+      console.log('Entering fullscreen...');
+      video.webkitEnterFullscreen();
+      
+      // Wait 1500ms (1.5 seconds) to let fullscreen take effect.
+      setTimeout(async () => {
+        try {
+          if (video.webkitSetPresentationMode) {
+            console.log('Attempting to trigger PiP after fullscreen...');
+            video.webkitSetPresentationMode('picture-in-picture');
+          } else if (document.pictureInPictureEnabled) {
+            if (video !== document.pictureInPictureElement) {
+              await video.requestPictureInPicture();
+              console.log('requestPictureInPicture called');
+            } else {
+              await document.exitPictureInPicture();
+              console.log('exitPictureInPicture called');
+            }
+          } else {
+            alert('Picture-in-Picture is not supported on this device.');
+          }
+        } catch (err) {
+          console.error('PiP failed after fullscreen:', err);
+        }
+      }, 1500);
+    } else {
+      // Fallback: if fullscreen isn’t available, try PiP directly.
+      console.log('Fullscreen API not available, trying PiP directly...');
       if (video.webkitSetPresentationMode) {
         video.webkitSetPresentationMode('picture-in-picture');
-        console.log('webkitSetPresentationMode called');
+        console.log('webkitSetPresentationMode called directly');
       } else if (document.pictureInPictureEnabled) {
         if (video !== document.pictureInPictureElement) {
           await video.requestPictureInPicture();
-          console.log('requestPictureInPicture called');
+          console.log('requestPictureInPicture called directly');
         } else {
           await document.exitPictureInPicture();
-          console.log('exitPictureInPicture called');
+          console.log('exitPictureInPicture called directly');
         }
       } else {
         alert('Picture-in-Picture is not supported on this device.');
       }
-    } catch (err) {
-      console.error('PiP failed:', err);
     }
-  }, 2000); // 2000ms delay
+  } catch (err) {
+    console.error('Error during PiP process:', err);
+  }
 });
   </script>
 </body>
