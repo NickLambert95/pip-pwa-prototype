@@ -17,9 +17,8 @@
 </head>
 <body>
   <h1>PWA PiP Prototype</h1>
-<video id="video" controls playsinline>
-  <source src="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4" type="video/mp4">
-  Your browser does not support HTML5 video.
+<video id="video" controls playsinline autoplay muted>
+  <source src="https://devstreaming-cdn.apple.com/videos/streaming/examples/bipbop_4x3/bipbop_4x3_variant.m3u8" type="application/vnd.apple.mpegurl">
 </video>
   <br>
   <button id="pipButton">Enter Picture-in-Picture</button>
@@ -35,30 +34,18 @@
     const video = document.getElementById('video');
     const pipButton = document.getElementById('pipButton');
 
-   pipButton.addEventListener('click', async () => {
+  pipButton.addEventListener('click', async () => {
   console.log('PiP button clicked');
-  // Delay the PiP request by 2000ms (2 seconds)
-  setTimeout(async () => {
-    console.log('Attempting to trigger PiP after delay...');
-    try {
-      if (video.webkitSetPresentationMode) {
-        video.webkitSetPresentationMode('picture-in-picture');
-        console.log('webkitSetPresentationMode called');
-      } else if (document.pictureInPictureEnabled) {
-        if (video !== document.pictureInPictureElement) {
-          await video.requestPictureInPicture();
-          console.log('requestPictureInPicture called');
-        } else {
-          await document.exitPictureInPicture();
-          console.log('exitPictureInPicture called');
-        }
-      } else {
-        alert('Picture-in-Picture is not supported on this device.');
-      }
-    } catch (err) {
-      console.error('PiP failed:', err);
+  try {
+    if (video.webkitSetPresentationMode) {
+      await video.webkitSetPresentationMode('picture-in-picture');
+    } else if (document.pictureInPictureEnabled) {
+      await video.requestPictureInPicture();
     }
-  }, 2000); // 2000ms delay
+  } catch (err) {
+    console.error('PiP failed:', err);
+    alert('PiP blocked by iOS in PWA mode. Open in Safari instead.');
+  }
 });
   </script>
 </body>
