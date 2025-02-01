@@ -10,12 +10,8 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <style>
-    body {
-      font-family: sans-serif;
-      text-align: center;
-      margin: 20px;
-    }
-    /* A large, obvious tap area to register a genuine user gesture */
+    body { font-family: sans-serif; text-align: center; margin: 20px; }
+    /* A large, obvious tap area for a genuine gesture */
     #activateArea {
       display: inline-block;
       padding: 20px;
@@ -30,34 +26,18 @@
 </head>
 <body>
   <h1>Main PWA</h1>
-  <p>Tap the area below to activate Picture-in-Picture using the external video page.</p>
-  <div id="activateArea">Activate PiP via External</div>
+  <p>Tap the area below to open the video in Safari for full Picture‑in‑Picture functionality.</p>
+  <div id="activateArea">Open in Safari</div>
 
   <script>
     const activateArea = document.getElementById('activateArea');
     
-    // Listen for a genuine touch event (e.g. touchend)
+    // Listen for a genuine touch event (you could also use 'click')
     activateArea.addEventListener('touchend', () => {
       console.log('User gesture detected in main PWA');
-      
-      // Create a hidden iframe that loads the external video page from a separate domain
-      const iframe = document.createElement('iframe');
-      iframe.style.position = 'absolute';
-      iframe.style.left = '-9999px';
-      iframe.style.width = '1px';
-      iframe.style.height = '1px';
-      
-      // Set the iframe's source to your external video page URL (ensure this is on a separate domain or repo)
-      iframe.src = 'https://nicklambert95.github.io/pip-video-external/';
-      
-      // Append the iframe to the document
-      document.body.appendChild(iframe);
-      
-      // When the iframe loads, send it a message to trigger PiP
-      iframe.onload = () => {
-        console.log('Iframe loaded; sending triggerPiP message');
-        iframe.contentWindow.postMessage({ action: 'triggerPiP' }, '*');
-      };
+      // Open the external page hosted on a separate domain.
+      // Replace the URL below with your external page URL.
+      window.open('https://nicklambert95.github.io/pip-video-external/', '_blank', 'noopener');
     });
   </script>
 </body>
