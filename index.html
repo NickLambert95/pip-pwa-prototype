@@ -1,7 +1,16 @@
 <!DOCTYPE html>
 <html>
 <head>
+  <!-- Existing meta tag -->
   <meta name="apple-mobile-web-app-capable" content="yes">
+
+  <!-- NEW: Add these lines below the existing meta tag -->
+  <link rel="manifest" href="manifest.json">
+  <meta name="apple-mobile-web-app-title" content="PiPPrototype">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="apple-touch-icon" href="icon-192.png">
+
+  <!-- Your existing styles -->
   <style>
     /* Hidden canvas for gesture analysis */
     #gestureCanvas {
@@ -23,6 +32,7 @@
   </style>
 </head>
 <body>
+  <!-- Your existing canvas and video elements -->
   <canvas id="gestureCanvas"></canvas>
   
   <div class="video-wrapper">
@@ -30,6 +40,23 @@
     <video id="shadowVideo" hidden playsinline webkit-playsinline></video>
   </div>
 
+  <!-- NEW: Add this script right before the closing </body> tag -->
+  <script>
+    // Service Worker Registration
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('sw.js')
+          .then(registration => {
+            console.log('ServiceWorker registration successful');
+          })
+          .catch(err => {
+            console.log('ServiceWorker registration failed: ', err);
+          });
+      });
+    }
+  </script>
+
+  <!-- Your existing script -->
   <script>
     const VIDEO_SRC = 'https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8';
     const mainVideo = document.getElementById('mainVideo');
