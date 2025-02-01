@@ -1,7 +1,7 @@
 {
   "name": "PWA PiP Prototype",
   "short_name": "PiPPrototype",
-  "start_url": ".",
+  "start_url": "https://nicklambert95.github.io/pip-pwa-prototype/",
   "display": "standalone",
   "background_color": "#1E202E",
   "theme_color": "#1E202E",
