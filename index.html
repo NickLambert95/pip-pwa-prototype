@@ -1,43 +1,46 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Main PWA - PiP Wrapper</title>
-  <!-- Link to the manifest -->
-  <link rel="manifest" href="manifest.json">
-  <!-- iOS meta tags for PWA appearance -->
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <!-- ... existing meta tags ... -->
   <style>
-    body { font-family: sans-serif; text-align: center; margin: 20px; }
-    /* A large, obvious tap area for a genuine gesture */
-    #activateArea {
-      display: inline-block;
-      padding: 20px;
-      background: #007BFF;
-      color: #fff;
-      border-radius: 5px;
-      margin-top: 20px;
-      cursor: pointer;
-      user-select: none;
+    /* Hidden iframe for stealth PiP activation */
+    #phantomFrame {
+      width: 0;
+      height: 0;
+      border: none;
+      visibility: hidden;
     }
   </style>
 </head>
 <body>
   <h1>Main PWA</h1>
-  <p>Tap the area below to open the video in Safari for full Picture‑in‑Picture functionality.</p>
-  <div id="activateArea">Open in Safari</div>
+  <div id="activateArea">Tap to Initialize</div>
+  <!-- Phantom iframe for cross-domain gesture chaining -->
+  <iframe id="phantomFrame" src="https://YOUR_GITHUB_USERNAME.github.io/pip-video-external/"></iframe>
 
   <script>
     const activateArea = document.getElementById('activateArea');
-    
-    // Listen for a genuine touch event (you could also use 'click')
-    activateArea.addEventListener('touchend', () => {
-      console.log('User gesture detected in main PWA');
-      // Open the external page hosted on a separate domain.
-      // Replace the URL below with your external page URL.
-      window.open('https://nicklambert95.github.io/pip-video-external/', '_blank', 'noopener');
+    const phantomFrame = document.getElementById('phantomFrame');
+
+    // Step 1: Capture user gesture in main PWA
+    activateArea.addEventListener('touchend', async () => {
+      console.log('Phase 1: User gesture captured in PWA');
+      
+      // Step 2: Inject code into iframe before navigation
+      phantomFrame.contentWindow.postMessage({
+        action: 'preloadVideo',
+        videoSrc: 'https://devstreaming-cdn.apple.com/videos/streaming/examples/bipbop_4x3/bipbop_4x3_variant.m3u8'
+      }, '*');
+
+      // Step 3: Open external page in hidden Safari context
+      window.open('https://YOUR_GITHUB_USERNAME.github.io/pip-video-external/', '_blank', 'noopener=yes');
+    });
+
+    // Step 4: Listen for PiP success from external page
+    window.addEventListener('message', (e) => {
+      if (e.data === 'pipSuccess') {
+        console.log('Phase 4: PiP activated successfully!');
+      }
     });
   </script>
 </body>
