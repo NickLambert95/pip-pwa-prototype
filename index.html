@@ -3,46 +3,99 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Stealth PiP Activator</title>
+  <link rel="manifest" href="manifest.json">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <style>
-    /* Hidden iframe for stealth PiP activation */
-    #phantomFrame {
-      width: 0;
-      height: 0;
-      border: none;
-      visibility: hidden;
+    /* Hidden video container with forced dimensions */
+    #videoContainer {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+      opacity: 0.0001;
+      pointer-events: none;
+    }
+    
+    /* Visible overlay for user interaction */
+    #gestureOverlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.8);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      color: white;
+      font-size: 1.5rem;
+      text-align: center;
     }
   </style>
 </head>
 <body>
-  <h1>Main PWA</h1>
-  <div id="activateArea">Tap to Initialize</div>
-  <!-- Phantom iframe for cross-domain gesture chaining -->
-  <iframe id="phantomFrame" src="https://nicklambert95.github.io/pip-video-external/"></iframe>
+  <div id="gestureOverlay">Tap and hold to activate PiP</div>
+  <div id="videoContainer">
+    <video id="video" playsinline webkit-playsinline muted loop>
+      <source src="https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8" type="application/x-mpegURL">
+    </video>
+  </div>
 
   <script>
-    const activateArea = document.getElementById('activateArea');
-    const phantomFrame = document.getElementById('phantomFrame');
+    const video = document.getElementById('video');
+    const overlay = document.getElementById('gestureOverlay');
+    let activationAttempted = false;
 
-    // Step 1: Capture user gesture in main PWA
-    activateArea.addEventListener('touchend', async () => {
-      console.log('Phase 1: User gesture captured in PWA');
+    // Multi-stage activation sequence
+    async function activatePiP() {
+      if (activationAttempted) return;
+      activationAttempted = true;
       
-      // Step 2: Inject code into iframe before navigation
-      phantomFrame.contentWindow.postMessage({
-        action: 'preloadVideo',
-        videoSrc: 'https://devstreaming-cdn.apple.com/videos/streaming/examples/bipbop_4x3/bipbop_4x3_variant.m3u8'
-      }, '*');
-
-      // Step 3: Open external page in hidden Safari context
-      window.open('https://nicklambert95.github.io/pip-video-external/', '_blank', 'noopener=yes');
-    });
-
-    // Step 4: Listen for PiP success from external page
-    window.addEventListener('message', (e) => {
-      if (e.data === 'pipSuccess') {
-        console.log('Phase 4: PiP activated successfully!');
+      try {
+        // Phase 1: Prime the video element
+        video.muted = true;
+        await video.play();
+        
+        // Phase 2: Gradual unmute and fullscreen trickery
+        await new Promise(resolve => setTimeout(resolve, 300));
+        video.muted = false;
+        
+        // Phase 3: Force layout recalculation
+        video.style.width = '100%';
+        video.offsetHeight; // Trigger reflow
+        
+        // Phase 4: Hidden fullscreen entry
+        await video.webkitEnterFullscreen();
+        
+        // Phase 5: Immediate PiP transition
+        await new Promise(resolve => setTimeout(resolve, 500));
+        video.webkitSetPresentationMode('picture-in-picture');
+        
+        // Phase 6: Cleanup UI
+        overlay.style.display = 'none';
+      } catch (error) {
+        console.error('PiP Activation Error:', error);
+        alert('PiP activation failed. Please try again.');
+        activationAttempted = false;
       }
-    });
+    }
+
+    // Complex gesture handling
+    let touchStartTime;
+    overlay.addEventListener('touchstart', () => {
+      touchStartTime = Date.now();
+    }, {passive: true});
+
+    overlay.addEventListener('touchend', async () => {
+      if (Date.now() - touchStartTime > 500) { // Long press detection
+        await activatePiP();
+      }
+    }, {passive: true});
+
+    // Backup click handler
+    overlay.addEventListener('click', activatePiP);
   </script>
 </body>
 </html>
