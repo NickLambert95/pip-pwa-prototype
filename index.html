@@ -37,49 +37,53 @@
     const video = document.getElementById('video');
     const pipButton = document.getElementById('pipButton');
 
-pipButton.addEventListener('click', async () => {
+ pipButton.addEventListener('click', async () => {
   console.log('PiP button clicked');
+
   try {
-    // First, attempt to enter fullscreen if available.
+    // Check if the fullscreen API is available.
     if (video.webkitEnterFullscreen) {
       console.log('Entering fullscreen...');
       video.webkitEnterFullscreen();
-      
-      // Wait 1500ms (1.5 seconds) to let fullscreen take effect.
-      setTimeout(async () => {
-        try {
-          if (video.webkitSetPresentationMode) {
-            console.log('Attempting to trigger PiP after fullscreen...');
-            video.webkitSetPresentationMode('picture-in-picture');
-          } else if (document.pictureInPictureEnabled) {
-            if (video !== document.pictureInPictureElement) {
+
+      // Attach an event listener for when fullscreen mode changes.
+      video.addEventListener('webkitfullscreenchange', async function fullscreenHandler() {
+        // When fullscreen has exited...
+        if (!document.webkitIsFullScreen) {
+          console.log('Fullscreen exited, attempting PiP...');
+          try {
+            if (video.webkitSetPresentationMode) {
+              video.webkitSetPresentationMode('picture-in-picture');
+              console.log('webkitSetPresentationMode called');
+            } else if (document.pictureInPictureEnabled) {
               await video.requestPictureInPicture();
               console.log('requestPictureInPicture called');
-            } else {
-              await document.exitPictureInPicture();
-              console.log('exitPictureInPicture called');
             }
-          } else {
-            alert('Picture-in-Picture is not supported on this device.');
+          } catch (err) {
+            console.error('PiP request failed after exiting fullscreen:', err);
           }
-        } catch (err) {
-          console.error('PiP failed after fullscreen:', err);
+          // Remove this handler so it only fires once.
+          video.removeEventListener('webkitfullscreenchange', fullscreenHandler);
+        }
+      });
+
+      // After 1.5 seconds, force exit fullscreen (if still in fullscreen).
+      setTimeout(() => {
+        if (document.webkitIsFullScreen && document.webkitExitFullscreen) {
+          console.log('Forcing exit from fullscreen...');
+          document.webkitExitFullscreen();
         }
       }, 1500);
+
     } else {
-      // Fallback: if fullscreen isn’t available, try PiP directly.
+      // Fallback if fullscreen isn't available.
       console.log('Fullscreen API not available, trying PiP directly...');
       if (video.webkitSetPresentationMode) {
         video.webkitSetPresentationMode('picture-in-picture');
         console.log('webkitSetPresentationMode called directly');
       } else if (document.pictureInPictureEnabled) {
-        if (video !== document.pictureInPictureElement) {
-          await video.requestPictureInPicture();
-          console.log('requestPictureInPicture called directly');
-        } else {
-          await document.exitPictureInPicture();
-          console.log('exitPictureInPicture called directly');
-        }
+        await video.requestPictureInPicture();
+        console.log('requestPictureInPicture called directly');
       } else {
         alert('Picture-in-Picture is not supported on this device.');
       }
