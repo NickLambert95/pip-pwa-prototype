@@ -35,24 +35,26 @@
     const video = document.getElementById('video');
     const pipButton = document.getElementById('pipButton');
 
-    pipButton.addEventListener('click', async () => {
-      try {
-        // For iOS Safari in standalone mode, use the non-standard method:
-        if (video.webkitSetPresentationMode) {
-          video.webkitSetPresentationMode('picture-in-picture');
-        } else if (document.pictureInPictureEnabled) {
-          if (video !== document.pictureInPictureElement) {
-            await video.requestPictureInPicture();
-          } else {
-            await document.exitPictureInPicture();
-          }
+   pipButton.addEventListener('click', async () => {
+  // Ensure video is playing and stable
+  setTimeout(async () => {
+    try {
+      if (video.webkitSetPresentationMode) {
+        video.webkitSetPresentationMode('picture-in-picture');
+      } else if (document.pictureInPictureEnabled) {
+        if (video !== document.pictureInPictureElement) {
+          await video.requestPictureInPicture();
         } else {
-          alert('Picture-in-Picture is not supported on this device.');
+          await document.exitPictureInPicture();
         }
-      } catch (err) {
-        console.error('PiP failed:', err);
+      } else {
+        alert('Picture-in-Picture is not supported on this device.');
       }
-    });
+    } catch (err) {
+      console.error('PiP failed:', err);
+    }
+  }, 1000);
+});
   </script>
 </body>
 </html>
