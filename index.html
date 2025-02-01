@@ -34,17 +34,11 @@
     const video = document.getElementById('video');
     const pipButton = document.getElementById('pipButton');
 
-  pipButton.addEventListener('click', async () => {
-  console.log('PiP button clicked');
+pipButton.addEventListener('click', async () => {
   try {
-    if (video.webkitSetPresentationMode) {
-      await video.webkitSetPresentationMode('picture-in-picture');
-    } else if (document.pictureInPictureEnabled) {
-      await video.requestPictureInPicture();
-    }
+    await video.requestPictureInPicture();
   } catch (err) {
-    console.error('PiP failed:', err);
-    alert('PiP blocked by iOS in PWA mode. Open in Safari instead.');
+    alert("PiP blocked. Open in Safari (not PWA) or see Step 2.");
   }
 });
   </script>
