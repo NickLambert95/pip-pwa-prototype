@@ -20,3 +20,14 @@ self.addEventListener('fetch', (event) => {
       .then((response) => response || fetch(event.request))
   );
 });
+
+self.addEventListener('fetch', (event) => {
+  if (event.request.url.includes('mux.dev')) {
+    event.respondWith(fetch(event.request));
+  } else {
+    event.respondWith(
+      caches.match(event.request)
+        .then((response) => response || fetch(event.request))
+    );
+  }
+});
