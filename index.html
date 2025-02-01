@@ -1,101 +1,133 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Stealth PiP Activator</title>
-  <link rel="manifest" href="manifest.json">
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <style>
-    /* Hidden video container with forced dimensions */
-    #videoContainer {
-      position: absolute;
-      width: 1px;
-      height: 1px;
-      overflow: hidden;
-      opacity: 0.0001;
-      pointer-events: none;
-    }
-    
-    /* Visible overlay for user interaction */
-    #gestureOverlay {
+    /* Hidden canvas for gesture analysis */
+    #gestureCanvas {
       position: fixed;
-      top: 0;
-      left: 0;
       width: 100%;
       height: 100%;
-      background: rgba(0, 0, 0, 0.8);
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      color: white;
-      font-size: 1.5rem;
-      text-align: center;
+      touch-action: none;
+      z-index: 9999;
+    }
+    
+    /* Video container with forced composition */
+    .video-wrapper {
+      transform: translateZ(0);
+      backface-visibility: hidden;
+      opacity: 0.0001;
+      width: 1px;
+      height: 1px;
     }
   </style>
 </head>
 <body>
-  <div id="gestureOverlay">Tap and hold to activate PiP</div>
-  <div id="videoContainer">
-    <video id="video" playsinline webkit-playsinline muted loop>
-      <source src="https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8" type="application/x-mpegURL">
-    </video>
+  <canvas id="gestureCanvas"></canvas>
+  
+  <div class="video-wrapper">
+    <video id="mainVideo" playsinline webkit-playsinline></video>
+    <video id="shadowVideo" hidden playsinline webkit-playsinline></video>
   </div>
 
   <script>
-    const video = document.getElementById('video');
-    const overlay = document.getElementById('gestureOverlay');
-    let activationAttempted = false;
+    const VIDEO_SRC = 'https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8';
+    const mainVideo = document.getElementById('mainVideo');
+    const shadowVideo = document.getElementById('shadowVideo');
+    const canvas = document.getElementById('gestureCanvas');
+    const ctx = canvas.getContext('2d');
+    
+    let lastGestureType = '';
+    let gestureSequence = [];
 
-    // Multi-stage activation sequence
-    async function activatePiP() {
-      if (activationAttempted) return;
-      activationAttempted = true;
-      
+    // Multi-stage video initialization
+    async function initVideoPipeline() {
       try {
-        // Phase 1: Prime the video element
-        video.muted = true;
-        await video.play();
+        // Phase 1: Shadow video pre-load
+        shadowVideo.src = VIDEO_SRC;
+        await shadowVideo.play().then(() => shadowVideo.pause());
         
-        // Phase 2: Gradual unmute and fullscreen trickery
-        await new Promise(resolve => setTimeout(resolve, 300));
-        video.muted = false;
+        // Phase 2: Main video initialization
+        mainVideo.src = VIDEO_SRC;
+        mainVideo.muted = true;
+        await mainVideo.play();
         
-        // Phase 3: Force layout recalculation
-        video.style.width = '100%';
-        video.offsetHeight; // Trigger reflow
-        
-        // Phase 4: Hidden fullscreen entry
-        await video.webkitEnterFullscreen();
-        
-        // Phase 5: Immediate PiP transition
-        await new Promise(resolve => setTimeout(resolve, 500));
-        video.webkitSetPresentationMode('picture-in-picture');
-        
-        // Phase 6: Cleanup UI
-        overlay.style.display = 'none';
+        // Phase 3: Audio context trickery
+        const audioContext = new AudioContext();
+        const source = audioContext.createMediaElementSource(mainVideo);
+        source.connect(audioContext.destination);
       } catch (error) {
-        console.error('PiP Activation Error:', error);
-        alert('PiP activation failed. Please try again.');
-        activationAttempted = false;
+        console.error('Pipeline initialization failed:', error);
       }
     }
 
-    // Complex gesture handling
-    let touchStartTime;
-    overlay.addEventListener('touchstart', () => {
-      touchStartTime = Date.now();
-    }, {passive: true});
+    // Advanced gesture recognition
+    function analyzeGesture(path) {
+      // Implement complex gesture pattern matching
+      const isPiPGesture = path.some(p => 
+        p.velocity > 0.5 && 
+        Math.abs(p.x2 - p.x1) > 100 &&
+        Date.now() - p.start < 500
+      );
+      
+      return isPiPGesture ? 'pip-activate' : '';
+    }
 
-    overlay.addEventListener('touchend', async () => {
-      if (Date.now() - touchStartTime > 500) { // Long press detection
-        await activatePiP();
+    canvas.addEventListener('touchmove', (e) => {
+      const touch = e.touches[0];
+      gestureSequence.push({
+        x: touch.clientX,
+        y: touch.clientY,
+        time: Date.now()
+      });
+      
+      if (gestureSequence.length > 40) {
+        lastGestureType = analyzeGesture(gestureSequence);
+        gestureSequence = [];
       }
-    }, {passive: true});
+    });
 
-    // Backup click handler
-    overlay.addEventListener('click', activatePiP);
+    // Stealth PiP activation sequence
+    async function attemptPiP() {
+      try {
+        // Stage 1: Force composite layer
+        mainVideo.style.transform = 'translateZ(0)';
+        
+        // Stage 2: Background video synchronization 
+        shadowVideo.currentTime = mainVideo.currentTime;
+        await shadowVideo.play();
+        
+        // Stage 3: Cross-fade activation
+        await mainVideo.webkitEnterFullscreen();
+        await new Promise(r => setTimeout(r, 300));
+        
+        // Stage 4: Presentation mode switch
+        document.exitFullscreen();
+        mainVideo.webkitSetPresentationMode('picture-in-picture');
+        
+        // Stage 5: Audio handoff
+        mainVideo.muted = false;
+        shadowVideo.muted = true;
+      } catch (error) {
+        console.error('Stealth PiP failed:', error);
+        // Implement fallback strategies
+      }
+    }
+
+    // Adaptive recovery system
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'hidden') {
+        shadowVideo.play().catch(() => {});
+      } else {
+        mainVideo.play().then(() => {
+          if (lastGestureType === 'pip-activate') {
+            attemptPiP();
+          }
+        });
+      }
+    });
+
+    initVideoPipeline();
   </script>
 </body>
 </html>
