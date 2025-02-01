@@ -1,7 +1,7 @@
 {
   "name": "PWA PiP Prototype",
   "short_name": "PiPPrototype",
-  "start_url": "/index.html",
+  "start_url": ".",
   "display": "standalone",
   "background_color": "#1E202E",
   "theme_color": "#1E202E",
