@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PWA PiP Prototype</title>
+  <!-- Link to the manifest -->
+  <link rel="manifest" href="manifest.json">
+  <!-- iOS meta tags for PWA appearance -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <style>
+    body { font-family: sans-serif; text-align: center; margin: 20px; }
+    video { width: 100%; max-width: 600px; }
+    button { margin-top: 10px; padding: 10px 20px; font-size: 16px; }
+  </style>
+</head>
+<body>
+  <h1>PWA PiP Prototype</h1>
+  <video id="video" controls playsinline>
+    <source src="https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8" type="application/x-mpegURL">
+    Your browser does not support HLS.
+  </video>
+  <br>
+  <button id="pipButton">Enter Picture-in-Picture</button>
+
+  <script>
+    // Register the service worker
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('sw.js')
+        .then(reg => console.log('Service Worker registered', reg))
+        .catch(err => console.error('SW registration failed', err));
+    }
+
+    const video = document.getElementById('video');
+    const pipButton = document.getElementById('pipButton');
+
+    pipButton.addEventListener('click', async () => {
+      try {
+        // For iOS Safari in standalone mode, use the non-standard method:
+        if (video.webkitSetPresentationMode) {
+          video.webkitSetPresentationMode('picture-in-picture');
+        } else if (document.pictureInPictureEnabled) {
+          if (video !== document.pictureInPictureElement) {
+            await video.requestPictureInPicture();
+          } else {
+            await document.exitPictureInPicture();
+          }
+        } else {
+          alert('Picture-in-Picture is not supported on this device.');
+        }
+      } catch (err) {
+        console.error('PiP failed:', err);
+      }
+    });
+  </script>
+</body>
+</html>
